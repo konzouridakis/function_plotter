@@ -198,6 +198,20 @@ def get_safe_filename(base_filename, format):
     
     return final_filename
 
+def get_float_from_input(prompt):
+    """Prompt user for a number or math expression and return as float."""
+    while True:
+        value_str = input(prompt).strip()
+        try:
+            print(f"[DEBUG] Input string: '{value_str}'")
+            value_sympy = sympify(value_str)
+            print(f"[DEBUG] sympify result: {value_sympy} (type: {type(value_sympy)})")
+            value = float(value_sympy)
+            print(f"[DEBUG] float result: {value}")
+            return value
+        except Exception as e:
+            print(f"Invalid input. Please enter a number or a valid math expression (e.g., 2*pi, pi/2, etc.). Error: {e}")
+
 def main():
     print("Function Plotter - SVG/PDF Export (True LaTeX Rendering)")
     print("--------------------------------------------------------")
@@ -213,8 +227,8 @@ def main():
             if plot_type == '1':
                 func_str = input("Enter function f(x) = ")
                 func_str = validate_function(func_str)
-                x_min = float(input("Enter minimum x value: "))
-                x_max = float(input("Enter maximum x value: "))
+                x_min = get_float_from_input("Enter minimum x value: ")
+                x_max = get_float_from_input("Enter maximum x value: ")
                 if x_min >= x_max:
                     raise ValueError("Minimum x value must be less than maximum x value")
                 format = get_output_format()
@@ -226,10 +240,10 @@ def main():
                 break
             else:
                 equation_str = input("Enter equation in x and y (e.g., x^2 + y^2 = 1): ")
-                x_min = float(input("Enter minimum x value: "))
-                x_max = float(input("Enter maximum x value: "))
-                y_min = float(input("Enter minimum y value: "))
-                y_max = float(input("Enter maximum y value: "))
+                x_min = get_float_from_input("Enter minimum x value: ")
+                x_max = get_float_from_input("Enter maximum x value: ")
+                y_min = get_float_from_input("Enter minimum y value: ")
+                y_max = get_float_from_input("Enter maximum y value: ")
                 if x_min >= x_max or y_min >= y_max:
                     raise ValueError("Minimum values must be less than maximum values")
                 format = get_output_format()

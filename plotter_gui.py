@@ -229,8 +229,8 @@ class PlotterGUI(tk.Tk):
         color = self.get_func_plot_color()
         legend_loc = self.func_legend_pos.get()
         try:
-            x_min = float(x_min)
-            x_max = float(x_max)
+            x_min = float(sympify(x_min))
+            x_max = float(sympify(x_max))
             if x_min >= x_max:
                 raise ValueError("x min must be less than x max")
             try:
@@ -317,10 +317,10 @@ class PlotterGUI(tk.Tk):
         y_min = self.eqn_ymin.get().strip()
         y_max = self.eqn_ymax.get().strip()
         try:
-            x_min = float(x_min)
-            x_max = float(x_max)
-            y_min = float(y_min)
-            y_max = float(y_max)
+            x_min = float(sympify(x_min))
+            x_max = float(sympify(x_max))
+            y_min = float(sympify(y_min))
+            y_max = float(sympify(y_max))
             if x_min >= x_max or y_min >= y_max:
                 raise ValueError("min must be less than max for both x and y")
             try:
