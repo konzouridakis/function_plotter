@@ -12,6 +12,7 @@ import os
 import shutil
 import sys
 import re
+import tikzplotlib
 
 # --- LaTeX dependency check (reuse from function_plotter.py) ---
 def check_latex_dependencies():
@@ -85,7 +86,7 @@ def plot_function_gui(func_str, x_min, x_max, color, legend_loc):
     ax.plot(x_vals, y_vals, color=color, label=legend_label)
     ax.grid(True)
     ax.set_xlabel(r'$x$')
-    ax.set_ylabel(r'$f(x)$')
+    ax.set_ylabel(r'$f(x)$', rotation=0, labelpad=20)
     ax.set_title(rf'$f(x) = {tex_expr}$')
     if legend_loc == "auto":
         if len(tex_expr) > 30:
@@ -119,7 +120,7 @@ def plot_equation_gui_preview(equation_str, x_min, x_max, y_min, y_max):
     ax.contour(X, Y, Z, levels=[0], colors='b')
     ax.grid(True)
     ax.set_xlabel(r'$x$')
-    ax.set_ylabel(r'$y$')
+    ax.set_ylabel(r'$y$', rotation=0, labelpad=20)
     ax.set_title(rf'${latex(eq)}$')
     fig.tight_layout()
     return fig
@@ -191,6 +192,8 @@ class PlotterGUI(tk.Tk):
         self.func_generate_btn.grid(row=4, column=0, columnspan=2, pady=10)
         self.func_export_btn = ttk.Button(tab, text="Export", command=self.export_function_plot, state="disabled")
         self.func_export_btn.grid(row=4, column=2, columnspan=2, pady=10)
+        self.func_export_tikz_btn = ttk.Button(tab, text="Export as TikZ/PGFPlots", command=self.export_function_plot_tikz, state="disabled")
+        self.func_export_tikz_btn.grid(row=4, column=4, columnspan=2, pady=10)
         self.func_status = ttk.Label(tab, text="", foreground="blue")
         self.func_status.grid(row=5, column=0, columnspan=7, pady=5)
         self.func_canvas = None
@@ -238,6 +241,7 @@ class PlotterGUI(tk.Tk):
             except Exception as e:
                 self.func_status.config(text=f"Error generating plot: {e}", foreground="red")
                 self.func_export_btn.config(state="disabled")
+                self.func_export_tikz_btn.config(state="disabled")
                 if self.func_canvas:
                     self.func_canvas.get_tk_widget().destroy()
                     self.func_canvas = None
@@ -251,9 +255,11 @@ class PlotterGUI(tk.Tk):
             self.func_canvas.get_tk_widget().pack(fill='both', expand=True)
             self.func_status.config(text="Plot generated. Click Export to save.", foreground="green")
             self.func_export_btn.config(state="normal")
+            self.func_export_tikz_btn.config(state="normal")
         except Exception as e:
             self.func_status.config(text=f"Error: {e}", foreground="red")
             self.func_export_btn.config(state="disabled")
+            self.func_export_tikz_btn.config(state="disabled")
             if self.func_canvas:
                 self.func_canvas.get_tk_widget().destroy()
                 self.func_canvas = None
@@ -268,6 +274,27 @@ class PlotterGUI(tk.Tk):
         filename = get_safe_filename(filename, format_)
         ok, msg = export_current_figure(self.func_fig, filename, format_)
         self.func_status.config(text=msg, foreground="green" if ok else "red")
+
+    def export_function_plot_tikz(self):
+        if not self.func_fig:
+            self.func_status.config(text="No plot to export.", foreground="red")
+            return
+        filename = self.func_filename.get().strip()
+        if not filename:
+            filename = "output.tex"
+        elif not filename.endswith(".tex"):
+            filename += ".tex"
+        filename = get_safe_filename(filename, "tex")
+        try:
+            if self.func_fig:
+                ax = self.func_fig.axes[0]
+                legend = ax.get_legend()
+                if legend:
+                    legend.remove()
+            tikzplotlib.save(filename, figure=self.func_fig)
+            self.func_status.config(text=f"Plot exported as TikZ/PGFPlots: '{filename}'", foreground="green")
+        except Exception as e:
+            self.func_status.config(text=f"Error exporting TikZ/PGFPlots: {e}", foreground="red")
 
     def create_equation_tab(self):
         tab = ttk.Frame(self.notebook, style='TFrame')
@@ -298,6 +325,8 @@ class PlotterGUI(tk.Tk):
         self.eqn_generate_btn.grid(row=4, column=0, columnspan=2, pady=10)
         self.eqn_export_btn = ttk.Button(tab, text="Export", command=self.export_equation_plot, state="disabled")
         self.eqn_export_btn.grid(row=4, column=2, columnspan=2, pady=10)
+        self.eqn_export_tikz_btn = ttk.Button(tab, text="Export as TikZ/PGFPlots", command=self.export_equation_plot_tikz, state="disabled")
+        self.eqn_export_tikz_btn.grid(row=4, column=4, columnspan=2, pady=10)
         self.eqn_status = ttk.Label(tab, text="", foreground="blue")
         self.eqn_status.grid(row=5, column=0, columnspan=4, pady=5)
         self.eqn_canvas = None
@@ -328,6 +357,7 @@ class PlotterGUI(tk.Tk):
             except Exception as e:
                 self.eqn_status.config(text=f"Error generating plot: {e}", foreground="red")
                 self.eqn_export_btn.config(state="disabled")
+                self.eqn_export_tikz_btn.config(state="disabled")
                 if self.eqn_canvas:
                     self.eqn_canvas.get_tk_widget().destroy()
                     self.eqn_canvas = None
@@ -341,9 +371,11 @@ class PlotterGUI(tk.Tk):
             self.eqn_canvas.get_tk_widget().pack(fill='both', expand=True)
             self.eqn_status.config(text="Plot generated. Click Export to save.", foreground="green")
             self.eqn_export_btn.config(state="normal")
+            self.eqn_export_tikz_btn.config(state="normal")
         except Exception as e:
             self.eqn_status.config(text=f"Error: {e}", foreground="red")
             self.eqn_export_btn.config(state="disabled")
+            self.eqn_export_tikz_btn.config(state="disabled")
             if self.eqn_canvas:
                 self.eqn_canvas.get_tk_widget().destroy()
                 self.eqn_canvas = None
@@ -358,6 +390,27 @@ class PlotterGUI(tk.Tk):
         filename = get_safe_filename(filename, format_)
         ok, msg = export_current_figure(self.eqn_fig, filename, format_)
         self.eqn_status.config(text=msg, foreground="green" if ok else "red")
+
+    def export_equation_plot_tikz(self):
+        if not self.eqn_fig:
+            self.eqn_status.config(text="No plot to export.", foreground="red")
+            return
+        filename = self.eqn_filename.get().strip()
+        if not filename:
+            filename = "output.tex"
+        elif not filename.endswith(".tex"):
+            filename += ".tex"
+        filename = get_safe_filename(filename, "tex")
+        try:
+            if self.eqn_fig:
+                ax = self.eqn_fig.axes[0]
+                legend = ax.get_legend()
+                if legend:
+                    legend.remove()
+            tikzplotlib.save(filename, figure=self.eqn_fig)
+            self.eqn_status.config(text=f"Plot exported as TikZ/PGFPlots: '{filename}'", foreground="green")
+        except Exception as e:
+            self.eqn_status.config(text=f"Error exporting TikZ/PGFPlots: {e}", foreground="red")
 
 if __name__ == "__main__":
     app = PlotterGUI()
